@@ -1,0 +1,17 @@
+{
+    "require": {
+        "cilex/cilex": "dev-master",
+        "doctrine/dbal": ">=2.2.0,<2.4.0-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Chrismou\\PhpdocsToSqlite\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Chrismou\\PhpdocsToSqlite\\Tests\\": "tests"
+        }
+    }
+
+}

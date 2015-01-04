@@ -1,0 +1,5 @@
+## Project
+vendor/*
+
+## IDE
+.idea/*
