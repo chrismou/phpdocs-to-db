@@ -1,14 +1,13 @@
 {
-    "name": "chrismou/phpdocs-to-sqlite",
-    "description": "App for creating an sqlite DB from the official PHP docs, using XML docs from the PHP SVN repository",
+    "name": "chrismou/phpdocs-to-db",
+    "description": "App for creating an sqlite PHP function database using a checkout of the PHP documentation SVN repository",
     "keywords": [ "php", "cilex", "docs", "phpdocs", "sqlite" ],
     "license": "Apache-2.0",
     "support": {
         "email": "hello@mou.me",
-        "issues": "https://github.com/chrismou/phpdocs-to-sqlite/issues",
-        "source": "https://github.com/chrismou/phpdocs-to-sqlite"
+        "issues": "https://github.com/chrismou/phpdocs-to-db/issues",
+        "source": "https://github.com/chrismou/phpdocs-to-db"
     },
-    "minimum-stability": "dev",
     "require": {
         "cilex/cilex": "dev-master",
         "doctrine/dbal": ">=2.2.0,<2.4.0-dev"
@@ -20,12 +19,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Chrismou\\PhpdocsToSqlite\\": "src"
+            "Chrismou\\PhpdocsToDb\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Chrismou\\PhpdocsToSqlite\\Tests\\": "tests"
+            "Chrismou\\PhpdocsToDb\\Tests\\": "tests"
         }
     }
 }

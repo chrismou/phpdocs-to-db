@@ -1,13 +1,13 @@
 <?php
 /**
- * App for generating a PHPdocs sqlite DB using XML from the PHP SVN repo
+ * App for generating an sqlite DB using the PHP documentation SVN repository
  *
- * @link https://github.com/chrismou/phergie-irc-plugin-react-php for the canonical source repository
+ * @link https://github.com/chrismou/phpdocs-to-db for the canonical source repository
  * @copyright Copyright (c) 2014 Chris Chrisostomou (http://mou.me)
- * @package Chrismou\PhpdocsToSqlite
+ * @package Chrismou\PhpdocsToDb
  */
 
-namespace Chrismou\PhpdocsToSqlite\Command;
+namespace Chrismou\PhpdocsToDb\Command;
 
 use Cilex\Application;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,7 +19,7 @@ use Symfony\Component\Console\Formatter\OutputFormatterStyle;
  * Creation command
  *
  * @category Chrismou
- * @package Chrismou\PhpdocsToSqlite\Command
+ * @package Chrismou\PhpdocsToDb\Command
  */
 class CreateCommand extends BaseCommand
 {
@@ -42,8 +42,8 @@ class CreateCommand extends BaseCommand
         //$this->setupDb();
 
         // Set the colours
-        //$output->getFormatter()->setStyle('notImplemented', new OutputFormatterStyle('red'));
-        //$output->getFormatter()->setStyle('doing', new OutputFormatterStyle('yellow'));
+        $output->getFormatter()->setStyle('notImplemented', new OutputFormatterStyle('red'));
+        $output->getFormatter()->setStyle('doing', new OutputFormatterStyle('yellow'));
 
         $output->getFormatter()->setStyle('type', new OutputFormatterStyle('green'));
         $output->getFormatter()->setStyle('function', new OutputFormatterStyle('cyan'));
@@ -52,7 +52,7 @@ class CreateCommand extends BaseCommand
         $output->getFormatter()->setStyle('initializer', new OutputFormatterStyle('red'));
 
         $output->writeln('Grabbing latest docs');
-        $output->writeln('<doing>*grabs latest docs*</doing>');
+        $output->writeln('<notImplemented>Not yet implemented - skipping</notImplemented>');
 
         $output->writeln('Selecting the language');
         $output->writeln('<notImplemented>Not yet implemented - skipping</notImplemented>');
