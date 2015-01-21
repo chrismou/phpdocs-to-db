@@ -1,6 +1,6 @@
 {
     "name": "chrismou/phpdocs-to-db",
-    "description": "App for creating an sqlite PHP function database using a checkout of the PHP documentation SVN repository",
+    "description": "App for creating an sqlite PHP function database using the PHP documentation SVN repository",
     "keywords": [ "php", "cilex", "docs", "phpdocs", "sqlite" ],
     "license": "Apache-2.0",
     "support": {
@@ -13,9 +13,9 @@
         "doctrine/dbal": ">=2.2.0,<2.4.0-dev"
     },
     "require-dev": {
-        "phpunit/phpunit": "4.1.*",
-        "phake/phake": "2.0.0-beta2",
-        "codeclimate/php-test-reporter": "dev-master"
+        "phpunit/phpunit": "~4.4",
+        "mockery/mockery": "~0.9",
+        "danrspencer/phpunit-expect-syntax": "dev-master"
     },
     "autoload": {
         "psr-4": {

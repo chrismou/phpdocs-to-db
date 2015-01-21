@@ -1,6 +1,6 @@
 <?php
 /**
- * App for generating an sqlite DB using the PHP documentation SVN repository
+ * App for generating an sqlite PHP function database using the PHP documentation SVN repository
  *
  * @link https://github.com/chrismou/phpdocs-to-db for the canonical source repository
  * @copyright Copyright (c) 2014 Chris Chrisostomou (http://mou.me)
@@ -60,7 +60,7 @@ class CreateCommand extends BaseCommand
         $output->writeln('Traversing the docs');
         //$output->writeln('<notImplemented>Not yet implemented - skipping</notImplemented>');
 
-        //TODO: db creation
+        //TODO: db creation & lite db support
         //sqlite_open(BUILD_DIRECTORY.'/')
         $existingfunctions = $this->app['db']->query("DELETE FROM function");
         $existingparams = $this->app['db']->query("DELETE FROM parameter");
