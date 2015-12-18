@@ -92,14 +92,19 @@ class CreateCommand extends BaseCommand
 
     protected function processFile($path, OutputInterface $output)
     {
-        if (false !== strpos($path, '/functions/') && substr($path, strlen($path)-4, strlen($path))=='.xml') {
+        $fileExtension = substr($path, strlen($path)-4, strlen($path));
+
+        if (false !== strpos($path, '/functions/') && $fileExtension == '.xml') {
             $xml = file_get_contents($path);
             $data = simplexml_load_string(str_replace("&", "", $xml));
             if (isset($data->refsect1->methodsynopsis->type)) {
 
                 $method = $data->refsect1->methodsynopsis;
 
-                if (isset($this->done[(string)$method->methodname])) return;
+                // If this method has already been added, skip the rest
+                if (isset($this->done[(string)$method->methodname])) {
+                    return;
+                }
 
                 $params = array();
                 $paramStrings = array();
@@ -107,15 +112,8 @@ class CreateCommand extends BaseCommand
 
                 if (isset($method->methodparam) && count($method->methodparam)) {
                     for ($paramCount=0; $paramCount<count($method->methodparam); $paramCount++) {
-                        //$paramStrings[] = sprintf('%s<type>%s</type> <parameter>%s</parameter>%s%s',
-                        $paramStrings[] = sprintf('%s%s %s%s%s',
-                            (isset($method->methodparam[$paramCount]['choice'])) ? '[ ' : '',
-                            $method->methodparam[$paramCount]->type,
-                            $method->methodparam[$paramCount]->parameter,
-                            //isset($method->methodparam[$paramCount]->initializer) ? sprintf('<initializer> = %s</initializer>', $method->methodparam[$paramCount]->initializer) : '',
-                            isset($method->methodparam[$paramCount]->initializer) ? sprintf(' = %s', $method->methodparam[$paramCount]->initializer) : '',
-                            (isset($method->methodparam[$paramCount]['choice'])) ? ' ]' : ''
-                        );
+
+                        $paramStrings = $this->buildParamString($method, $paramCount);
 
                         $paramDescription = str_replace("\n", " ", trim(strip_tags((string)$data->refsect1->para->asXml())));
                         $fixedParamDescription = $paramDescription;
@@ -160,7 +158,9 @@ class CreateCommand extends BaseCommand
                     'parameterString' => $paramString,
                     'description' => $fixedDescription
                 );
+
                 $this->app['db']->insert('function', $data);
+
                 $functionId = $this->app['db']->lastInsertId();
 
                 foreach ($params as $param) {
@@ -173,6 +173,18 @@ class CreateCommand extends BaseCommand
 
             }
         }
+    }
+
+    protected function buildParamString($method, $paramCount)
+    {
+        return sprintf('%s%s %s%s%s',
+            (isset($method->methodparam[$paramCount]['choice'])) ? '[ ' : '',
+            $method->methodparam[$paramCount]->type,
+            $method->methodparam[$paramCount]->parameter,
+            //isset($method->methodparam[$paramCount]->initializer) ? sprintf('<initializer> = %s</initializer>', $method->methodparam[$paramCount]->initializer) : '',
+            isset($method->methodparam[$paramCount]->initializer) ? sprintf(' = %s', $method->methodparam[$paramCount]->initializer) : '',
+            (isset($method->methodparam[$paramCount]['choice'])) ? ' ]' : ''
+        );
     }
 
     protected function stripExtraSpaces($string)

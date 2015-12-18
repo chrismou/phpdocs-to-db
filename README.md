@@ -40,7 +40,7 @@ Now open a terminal, get into the project root and run the following command:
 php run.php phpdocdb:create
 ```
 
-# Future
+##s Future
 
 * Automatic DB creation (currently requires the included sqlite skeleton db)
 * Support for auto checkout/update using the PHP SVN module
@@ -48,3 +48,7 @@ php run.php phpdocdb:create
 * Support for multiple DB providers
 * Option to select whether to create a multi-table relational DB or a single-table DB (ie, for if filesize is an issue)
 ** Including being able to specify whether to include full variable definitions, etc
+
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE.md)s
