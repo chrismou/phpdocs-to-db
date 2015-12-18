@@ -15,6 +15,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Command\Command as BaseCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
+use Chrismou\PhpdocsToDb\Helpers\FileProcessor;
+
 /**
  * Creation command
  *
@@ -23,10 +25,19 @@ use Symfony\Component\Console\Formatter\OutputFormatterStyle;
  */
 class CreateCommand extends BaseCommand
 {
-    protected $done = array();
+    /** @var array */
+    protected $done = [];
+
+    /** @var Application */
+    protected $app;
+
+    /** @var \Chrismou\PhpdocsToDb\Helpers\FileProcessor */
+    protected $fileProcessor;
 
     function __construct(Application $app) {
         $this->app = $app;
+        $this->fileProcessor = new FileProcessor();
+
         parent::__construct();
     }
 
@@ -79,150 +90,39 @@ class CreateCommand extends BaseCommand
 
         $paths = array($baseDir);
         foreach ($iterator as $path => $dir) {
-            if (false !== strpos($path, '.svn')) continue;
+            if (false !== strpos($path, '.svn')) {
+                continue;
+            }
 
             //$output->writeln($path);
             if ($dir->isDir()) {
                 $this->scanDirectory($path, $output);
             } else {
-                $this->processFile($path, $output);
-            }
-        }
-    }
+                $data = $this->fileProcessor->processFile($path);
 
-    protected function processFile($path, OutputInterface $output)
-    {
-        $fileExtension = substr($path, strlen($path)-4, strlen($path));
+                if (count($data) && !isset($this->done[$data['name']])) {
+                    // Grab out the array of parameters and unset it from the main data array before saving
+                    $params = $data['params'];
+                    unset($data['params']);
 
-        if (false !== strpos($path, '/functions/') && $fileExtension == '.xml') {
-            $xml = file_get_contents($path);
-            $data = simplexml_load_string(str_replace("&", "", $xml));
-            if (isset($data->refsect1->methodsynopsis->type)) {
+                    $this->app['db']->insert('function', $data);
+                    $functionId = $this->app['db']->lastInsertId();
 
-                $method = $data->refsect1->methodsynopsis;
-
-                // If this method has already been added, skip the rest
-                if (isset($this->done[(string)$method->methodname])) {
-                    return;
-                }
-
-                $params = array();
-                $paramStrings = array();
-                $paramString = 'void';
-
-                if (isset($method->methodparam) && count($method->methodparam)) {
-                    for ($paramCount=0; $paramCount<count($method->methodparam); $paramCount++) {
-
-                        $paramStrings = $this->buildParamString($method, $paramCount);
-
-                        $paramDescription = str_replace("\n", " ", trim(strip_tags((string)$data->refsect1->para->asXml())));
-                        $fixedParamDescription = $paramDescription;
-
-                        while ($paramDescription=$this->stripExtraSpaces($paramDescription)) {
-                            $fixedParamDescription = $paramDescription;
-                        }
-
-                        $params[] = array(
-                            'parameter' => $method->methodparam[$paramCount]->parameter,
-                            'type' => $method->methodparam[$paramCount]->type,
-                            'description' => ($fixedParamDescription) ? $fixedParamDescription : null,
-                            'initializer' => isset($method->methodparam[$paramCount]->initializer) ? $method->methodparam[$paramCount]->initializer : null,
-                            'optional' => ($method->methodparam[$paramCount]['choice'] && $method->methodparam[$paramCount]['choice']=='opt') ? 1 : 0
-                        );
+                    foreach ($params as $param) {
+                        $param['functionId'] = $functionId;
+                        $this->app['db']->insert('parameter', $param);
                     }
+
+                    $this->done[(string)$data['name']] = true;
+
+                    $output->writeln(sprintf(
+                        '<type>%s</type> <methodname>%s</methodname> ( %s )',
+                        $data['type'],
+                        $data['name'],
+                        $data['parameterDescription']
+                    ));
                 }
-
-                if (count($paramStrings)) {
-                    $paramString = implode(', ', $paramStrings);
-                }
-
-                $description = str_replace("\n", " ", trim(strip_tags((string)$data->refsect1->para->asXml())));
-                $fixedDescription = $description;
-
-                while ($description=$this->stripExtraSpaces($description)) {
-                    $fixedDescription = $description;
-                }
-
-
-                $output->writeln(sprintf(
-                    '<type>%s</type> <methodname>%s</methodname> ( %s )',
-                    $method->type,
-                    $method->methodname,
-                    $paramString
-                ));
-                $output->writeln((string) $fixedDescription);
-
-                $data = array(
-                    'name' => (string)$method->methodname,
-                    'type' => (string)$method->type,
-                    'parameterString' => $paramString,
-                    'description' => $fixedDescription
-                );
-
-                $this->app['db']->insert('function', $data);
-
-                $functionId = $this->app['db']->lastInsertId();
-
-                foreach ($params as $param) {
-                    $param['functionId'] = $functionId;
-                    $this->app['db']->insert('parameter', $param);
-                }
-
-                //TODO: wut
-                $this->done[(string)$method->methodname] = true;
-
             }
         }
     }
-
-    protected function buildParamString($method, $paramCount)
-    {
-        return sprintf('%s%s %s%s%s',
-            (isset($method->methodparam[$paramCount]['choice'])) ? '[ ' : '',
-            $method->methodparam[$paramCount]->type,
-            $method->methodparam[$paramCount]->parameter,
-            //isset($method->methodparam[$paramCount]->initializer) ? sprintf('<initializer> = %s</initializer>', $method->methodparam[$paramCount]->initializer) : '',
-            isset($method->methodparam[$paramCount]->initializer) ? sprintf(' = %s', $method->methodparam[$paramCount]->initializer) : '',
-            (isset($method->methodparam[$paramCount]['choice'])) ? ' ]' : ''
-        );
-    }
-
-    protected function stripExtraSpaces($string)
-    {
-        $changed = false;
-        if (strpos($string, '  ')) {
-            $changed = str_replace('  ', ' ', $string);
-        }
-        return $changed;
-    }
-
-    //TODO: auto db setup
-    //TODO: option to switch between full DB (w/ fks) or basic (single table)
-   /* protected function setupDb() {
-        $functions = "CREATE TABLE `function` (`id`	INTEGER PRIMARY KEY AUTOINCREMENT, `name` TEXT UNIQUE, `type` TEXT, `description` TEXT";
-        $params = "CREATE TABLE `parameter` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `parameter` TEXT NOT NULL, `type` TEXT NOT NULL, `initializer`	TEXT, `functionId` INTEGER NOT NULL";
-
-        $schema = new \Doctrine\DBAL\Schema\Schema();
-        $functions = $schema->createTable('function');
-        $functions->addColumn('id', 'integer', array('autoincrement'=>true));
-        $functions->addColumn('name', 'text');
-        $functions->addColumn('type', 'text');
-        $functions->addColumn('description', 'text');
-        $functions->setPrimaryKey(array('id'));
-        $functions->addUniqueIndex(array('name'));
-        $schema->createSequence('function_seq');
-
-        $parameter = $schema->createTable('parameter');
-        $parameter->addColumn('id', 'integer', array('autoincrement'=>true));
-        $parameter->addColumn('parameter', 'text');
-        $parameter->addColumn('type', 'text');
-        $parameter->addColumn('initializer', 'text');
-        $parameter->setPrimaryKey(array('id'));
-        $schema->createSequence('parameter_seq');
-
-        $sql = $schema->toSql(new \Doctrine\DBAL\Platforms\SqlitePlatform);
-
-        var_dump($sql);
-        die;
-    }*/
 }
